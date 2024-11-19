@@ -1,7 +1,6 @@
 const Listing = require('../models/listings');
 const User = require('../models/user');
-const HostingListings = require('../models/hosted_listings'); // Assuming this is the correct schema
-
+const HostingListings = require('../models/hosted_listings'); 
 
 exports.addListing = async (req, res) => {
   try {
@@ -20,27 +19,21 @@ exports.addListing = async (req, res) => {
       amenities,
       images,
       hostID: userId,
-    });
-
-    // Save the new Listing
+    }); 
     await newListing.save();
-
-    // Retrieve the user's role and hosted_listings
+ 
     const user = await User.findById(userId).select('role hosted_listings');
 
     if (user && user.role === 'Host') {
       const hostingListingsId = user.hosted_listings;
-
-      // Find the relevant hosting listings document
+ 
       const hostingListingsDoc = await HostingListings.findById(hostingListingsId);
 
-      if (hostingListingsDoc) {
-        // Append the new listing ID to the listings array
+      if (hostingListingsDoc) { 
         hostingListingsDoc.listings.push(newListing._id);
         await hostingListingsDoc.save();
       }
-
-      // Optionally, update the user's hosted_listings array with the new listing
+ 
       user.hosted_listings = hostingListingsId;
       await user.save();
     }
@@ -52,5 +45,30 @@ exports.addListing = async (req, res) => {
   } catch (error) {
     console.error('Error adding listing:', error);
     res.status(500).json({ error: 'Server error. Please try again later.' });
+  }
+};
+
+
+exports.getHostedListings = async (req, res) => {
+  try { 
+    const userId = req.user.id; 
+    const user = await User.findById(userId, 'hosted_listings role');
+
+    if (!user || user.role !== 'Host') {
+      return res.status(403).json({ error: 'Access denied. User is not a host.' });
+    }
+ 
+    const hostListing = await HostingListings.findById(user.hosted_listings, 'listings');
+
+    if (!hostListing) {
+      return res.status(404).json({ error: 'Hosted listings not found.' });
+    }
+ 
+    const listings = await Listing.find({ _id: { $in: hostListing.listings } });
+
+    res.status(200).json({ listings });
+  } catch (error) {
+    console.error('Error fetching hosted listings:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 };

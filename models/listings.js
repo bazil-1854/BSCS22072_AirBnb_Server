@@ -57,7 +57,7 @@ const ListingSchema = new mongoose.Schema({
       default: [],
       validate: {
         validator: function (v) {
-          return v.length <= 5;
+          return v.length <= 4;
         },
         message: 'You can add up to 5 additional images only.',
       },
