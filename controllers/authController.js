@@ -1,5 +1,6 @@
 const User = require('../models/user');
 const jwt = require('jsonwebtoken');
+const HostListing = require('../models//hosted_listings');
 const bcrypt = require('bcryptjs');
 
 exports.register = async (req, res) => {
@@ -20,6 +21,20 @@ exports.register = async (req, res) => {
       fullName,
       role
     });
+
+    // If the user is a Host, create a HostListing document and link it
+    if (role === 'Host') {
+      const hostListing = new HostListing({
+        hostID: newUser._id
+      });
+
+      // Save the HostListing document
+      await hostListing.save();
+
+      // Link the HostListing document ID to the User's hosted_listings field
+      newUser.hosted_listings = hostListing._id;
+    }
+
     await newUser.save();
 
     res.status(201).json({ message: 'User registered successfully' });
@@ -28,6 +43,7 @@ exports.register = async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 };
+
 
 exports.login = async (req, res) => {
   try {

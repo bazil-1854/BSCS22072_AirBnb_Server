@@ -2,45 +2,45 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
-  username: { 
-    type: String, 
+  username: {
+    type: String,
     //required: true, 
     //unique: true, 
-    default: 'User 1', 
-    trim: true 
+    default: 'User 1',
+    trim: true
   },
-  email: { 
-    type: String, 
+  email: {
+    type: String,
     //required: true, 
-    unique: true, 
-    lowercase: true, 
-    trim: true 
+    unique: true,
+    lowercase: true,
+    trim: true
   },
-  password: { 
-    type: String, 
+  password: {
+    type: String,
     //required: true, 
-    minlength: 6 
+    minlength: 6
   },
-  role: { 
-    type: String, 
-    enum: ['Host', 'Guest'], 
-    default: 'Guest' 
+  role: {
+    type: String,
+    enum: ['Host', 'Guest'],
+    default: 'Guest'
   },
-  fullName: { 
-    type: String, 
-    trim: true, 
-    required: true 
+  fullName: {
+    type: String,
+    trim: true,
+    required: true
   },
-  dob: { 
-    type: Date, 
+  dob: {
+    type: Date,
     //required: true 
   },
-  profilePicture: { 
-    type: String, 
-    default: 'https://example.com/default-profile.png' 
+  profilePicture: {
+    type: String,
+    default: 'https://example.com/default-profile.png'
   },
-  phoneNumber: { 
-    type: String, 
+  phoneNumber: {
+    type: String,
     //required: true, 
     validate: {
       validator: function (v) {
@@ -49,14 +49,14 @@ const userSchema = new mongoose.Schema({
       message: props => `${props.value} is not a valid phone number!`
     }
   },
-  bio: { 
-    type: String, 
-    default: 'Hi, I’m new here!', 
-    maxlength: 500 
+  bio: {
+    type: String,
+    default: 'Hi, I’m new here!',
+    maxlength: 500
   },
-  interests: { 
-    type: [String], 
-    default: [], 
+  interests: {
+    type: [String],
+    default: [],
     validate: {
       validator: function (v) {
         return v.length <= 10;
@@ -64,9 +64,9 @@ const userSchema = new mongoose.Schema({
       message: 'You can specify up to 10 interests only.'
     }
   },
-  languages: { 
-    type: [String], 
-    default: [], 
+  languages: {
+    type: [String],
+    default: [],
     validate: {
       validator: function (v) {
         return v.length <= 5;
@@ -74,31 +74,36 @@ const userSchema = new mongoose.Schema({
       message: 'You can specify up to 5 languages only.'
     }
   },
-  location: { 
+  location: {
     city: { type: String, default: '' },
     country: { type: String, default: '' }
   },
-  occupation: { 
-    type: String, 
-    default: '' 
+  occupation: {
+    type: String,
+    default: ''
   },
-  about: { 
-    type: String, 
-    default: 'Tell us more about yourself!', 
-    maxlength: 1000 
+  about: {
+    type: String,
+    default: 'Tell us more about yourself!',
+    maxlength: 1000
   },
   socialLinks: {
     facebook: { type: String, default: '' },
     instagram: { type: String, default: '' },
     linkedin: { type: String, default: '' }
   },
-  verified: { 
-    type: Boolean, 
-    default: false 
+  verified: {
+    type: Boolean,
+    default: false
   },
-  createdAt: { 
-    type: Date, 
-    default: Date.now 
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  hosted_listings: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'HostListing',  // Reference to the HostListing document
+    default: null
   }
 });
 
