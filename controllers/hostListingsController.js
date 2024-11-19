@@ -67,8 +67,74 @@ exports.getHostedListings = async (req, res) => {
     const listings = await Listing.find({ _id: { $in: hostListing.listings } });
 
     res.status(200).json({ listings });
-  } catch (error) {
+  } 
+  catch (error) {
     console.error('Error fetching hosted listings:', error);
     res.status(500).json({ error: 'Server error' });
+  }
+};
+
+
+exports.updateListing = async (req, res) => {
+  try {
+    const { id } = req.params; 
+    const updatedData = req.body;  
+ 
+    const listing = await Listing.findByIdAndUpdate(id, updatedData, { new: true });
+
+    if (!listing) {
+      return res.status(404).json({ error: 'Listing not found' });
+    }
+
+    res.status(200).json({ message: 'Listing updated successfully', listing });
+  }
+  catch (error) {
+    console.error('Error updating listing:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+exports.deleteListing = async (req, res) => {
+  const listingId = req.params.id;
+  const userId = req.user._id; 
+
+  try { 
+    const user = await User.findById(userId).select("hosted_listings");
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+ 
+    const hostListing = await HostingListings.findById(user);
+
+    if (!hostListing) {
+      return res.status(404).json({ message: 'No hosted listings found for this user.' });
+    }
+    consoel.log(hostListing)
+ 
+
+    const updatedHostListing = await HostingListings.findOneAndUpdate(
+      { user: userId },
+      { $pull: { listings: listingId } },
+      { new: true }
+    );
+
+    if (!updatedHostListing) {
+      return res.status(404).json({ message: 'Failed to update hosted listings.' });
+    }
+ 
+    const deletedListing = await Listing.findByIdAndDelete(listingId);
+
+    if (!deletedListing) {
+      return res.status(404).json({ message: 'Listing not found.' });
+    }
+ 
+    res.status(200).json({
+      message: 'Listing deleted successfully.',
+      data: { deletedListing, updatedHostListing },
+    });
+  } catch (error) {
+    console.error('Error deleting listing:', error);
+    res.status(500).json({ message: 'Internal server error.', error: error.message });
   }
 };
