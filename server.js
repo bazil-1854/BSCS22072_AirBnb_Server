@@ -11,7 +11,8 @@ app.use(cors());
 app.use(express.json());
 
 
-app.use('/air-bnb/auth', require("./routes/auth"));
+app.use('/air-bnb/auth', require("./routes/authRoute"));
+app.use('/air-bnb/profile', require("./routes/profileRoute"));
  
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

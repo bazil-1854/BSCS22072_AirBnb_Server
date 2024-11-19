@@ -7,9 +7,19 @@ exports.register = async (req, res) => {
     const { email, password, fullName, role } = req.body;
 
     const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ error: 'User already exists', message: 'User already exists' });
+    if (existingUser) {
+      return res.status(400).json({ error: 'User already exists', message: 'User already exists' });
+    }
 
-    const newUser = new User({ email, password, fullName, role });
+    // Hash the password before saving
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = new User({
+      email,
+      password: hashedPassword,
+      fullName,
+      role
+    });
     await newUser.save();
 
     res.status(201).json({ message: 'User registered successfully' });
@@ -24,38 +34,27 @@ exports.login = async (req, res) => {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    if (!user) {
       return res.status(400).json({ error: 'Invalid credentials' });
     }
 
+    // Check if the provided password matches the hashed password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(400).json({ error: 'Invalid credentials' });
+    }
+
+    // Generate JWT token
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: '6h' }
     );
 
-    res.json({
-      token,
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        role: user.role,
-        fullName: user.fullName,
-        dob: user.dob,
-        phoneNumber: user.phoneNumber,
-        bio: user.bio,
-        interests: user.interests,
-        languages: user.languages,
-        location: user.location,
-        occupation: user.occupation,
-        about: user.about,
-        socialLinks: user.socialLinks,
-        profilePicture: user.profilePicture
-      }
-    });
+    res.json({ token }); // Only send the token
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Server error' });
   }
 };
+
