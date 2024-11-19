@@ -4,20 +4,21 @@ const bcrypt = require('bcryptjs');
 const userSchema = new mongoose.Schema({
   username: { 
     type: String, 
-    required: true, 
-    unique: true, 
+    //required: true, 
+    //unique: true, 
+    default: 'User 1', 
     trim: true 
   },
   email: { 
     type: String, 
-    required: true, 
+    //required: true, 
     unique: true, 
     lowercase: true, 
     trim: true 
   },
   password: { 
     type: String, 
-    required: true, 
+    //required: true, 
     minlength: 6 
   },
   role: { 
@@ -32,7 +33,7 @@ const userSchema = new mongoose.Schema({
   },
   dob: { 
     type: Date, 
-    required: true 
+    //required: true 
   },
   profilePicture: { 
     type: String, 
@@ -40,10 +41,10 @@ const userSchema = new mongoose.Schema({
   },
   phoneNumber: { 
     type: String, 
-    required: true, 
+    //required: true, 
     validate: {
       validator: function (v) {
-        return /^\+?[1-9]\d{1,14}$/.test(v); // Validates international phone numbers
+        return /^\+?[1-9]\d{1,14}$/.test(v);
       },
       message: props => `${props.value} is not a valid phone number!`
     }
@@ -58,7 +59,7 @@ const userSchema = new mongoose.Schema({
     default: [], 
     validate: {
       validator: function (v) {
-        return v.length <= 10; // Limit to a maximum of 10 interests
+        return v.length <= 10;
       },
       message: 'You can specify up to 10 interests only.'
     }
@@ -68,7 +69,7 @@ const userSchema = new mongoose.Schema({
     default: [], 
     validate: {
       validator: function (v) {
-        return v.length <= 5; // Limit to 5 languages
+        return v.length <= 5;
       },
       message: 'You can specify up to 5 languages only.'
     }
@@ -101,10 +102,11 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-// Hash password before saving the user
+userSchema.index({ email: 1 });
+
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
-  this.password = await bcrypt.hash(this.password, 10);
+  this.password = bcrypt.hash(this.password, 10);
   next();
 });
 
