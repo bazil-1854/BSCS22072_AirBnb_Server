@@ -11,6 +11,9 @@ app.use(cors());
 app.use(express.json());
 
 
+app.use('/air-bnb/home', require("./routes/listingsRoutes"));
+
+
 app.use('/air-bnb/auth', require("./routes/authRoute"));
 app.use('/air-bnb/profile', require("./routes/profileRoute"));
 
