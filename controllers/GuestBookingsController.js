@@ -1,12 +1,12 @@
 const Booking = require('../models/bookings');
 const ListingBooking = require('../models/listing_bookings');
 const GuestBooking = require('../models/guest_bookings');
+const HostBooking = require('../models/host_bookings');
 
 exports.createBooking = async (req, res) => {
   try {
     const userId = req.user.id; // Extract user ID from middleware
-    //console.log(userId);
-    const { listingId, checkIn, checkOut, guests, totalAmount, specialRequests } = req.body;
+    const { listingId, hostId, checkIn, checkOut, guests, totalAmount, specialRequests } = req.body;
 
     // Create the new booking
     const newBooking = new Booking({
@@ -24,12 +24,13 @@ exports.createBooking = async (req, res) => {
     const listingBooking = await ListingBooking.findById(listingId);
     if (!listingBooking) {
       return res.status(404).json({ error: 'Listing\'s booking document not found.' });
-    }    
-    
-    // Push the new booking ID into the bookings array
+    }
+
+    // Push the new booking ID into the bookings array of ListingBooking
     listingBooking.bookings.push(newBooking._id);
     await listingBooking.save();
 
+    // Update the GuestBooking document
     const guestBooking = await GuestBooking.findById(userId);
     if (!guestBooking) {
       return res.status(404).json({ error: 'User guest booking document not found.' });
@@ -37,6 +38,23 @@ exports.createBooking = async (req, res) => {
 
     guestBooking.bookings.push(newBooking._id);
     await guestBooking.save();
+
+    // Update or Create the HostBooking document
+    const hostBooking = await HostBooking.findById(hostId);
+
+    if (!hostBooking) {
+      // If no document exists, create a new one
+      const newHostBooking = new HostBooking({
+        _id: hostId,
+        bookings: [newBooking._id],
+      });
+      await newHostBooking.save();
+    }
+    else {
+      // If the document exists, push the booking ID
+      hostBooking.bookings.push(newBooking._id);
+      await hostBooking.save();
+    }
 
     res.status(201).json({
       message: 'Booking created successfully!',
@@ -47,6 +65,7 @@ exports.createBooking = async (req, res) => {
     res.status(500).json({ error: 'Server error. Please try again later.' });
   }
 };
+
 
 exports.getBlockedDates = async (req, res) => {
   try {
@@ -85,7 +104,7 @@ exports.getGuestBookings = async (req, res) => {
   try {
     const userId = req.user.id;
     //console.log(userId); 
-    
+
     const guestBookings = await GuestBooking.findById(userId);
 
     if (!guestBookings) {

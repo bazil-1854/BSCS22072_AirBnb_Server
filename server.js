@@ -19,6 +19,7 @@ app.use('/air-bnb/profile', require("./routes/profileRoute"));
 
 app.use('/air-bnb/reservation', require("./routes/guestBookingRoute"));
 
+app.use('/air-bnb/manage-bookings', require("./routes/hostBookingsRoute"));
 
 // add  alisintg
 app.use('/air-bnb/hosting', require("./routes/hostListingsRoute"));
