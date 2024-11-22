@@ -79,3 +79,28 @@ exports.getBlockedDates = async (req, res) => {
     res.status(500).json({ error: 'Server error. Please try again later.' });
   }
 };
+
+// Fetch guest bookings
+exports.getGuestBookings = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    //console.log(userId); 
+    
+    const guestBookings = await GuestBooking.findById(userId);
+
+    if (!guestBookings) {
+      return res.status(404).json({ message: 'No bookings found for this user.' });
+    }
+
+    // Fetch booking details for each booking ID in the array
+    const bookingsDetails = await Promise.all(
+      guestBookings.bookings.map((bookingId) => Booking.findById(bookingId))
+    );
+
+    res.status(200).json({ bookings: bookingsDetails });
+  }
+  catch (error) {
+    console.error('Error fetching guest bookings:', error);
+    res.status(500).json({ error: 'Failed to fetch guest bookings.' });
+  }
+};
