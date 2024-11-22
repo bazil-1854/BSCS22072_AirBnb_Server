@@ -7,4 +7,4 @@ const GuestListingBookingSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model('guestlistings', GuestListingBookingSchema);
+module.exports = mongoose.model('guestbookings', GuestListingBookingSchema);

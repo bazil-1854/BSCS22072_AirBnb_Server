@@ -5,7 +5,7 @@ const BookingSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     auto: true,
   },
-  listingID: {
+  listingId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'listings',
     required: true,
