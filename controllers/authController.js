@@ -1,7 +1,9 @@
 const User = require('../models/user');
 const jwt = require('jsonwebtoken');
 const HostListing = require('../models//hosted_listings');
+const GuestBookings = require('../models/guest_bookings');
 const bcrypt = require('bcryptjs');
+
 
 exports.register = async (req, res) => {
   try {
@@ -26,13 +28,15 @@ exports.register = async (req, res) => {
     if (role === 'Host') {
       const hostListing = new HostListing({
         hostID: newUser._id
-      });
-
-      // Save the HostListing document
-      await hostListing.save();
-
-      // Link the HostListing document ID to the User's hosted_listings field
+      }); 
+      await hostListing.save(); 
       newUser.hosted_listings = hostListing._id;
+    }
+    else {
+      const guestListings = new GuestBookings({
+        _id: newUser._id
+      });
+      await guestListings.save(); 
     }
 
     await newUser.save();
