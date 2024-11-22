@@ -68,6 +68,11 @@ const ListingSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
+  listingBookingID: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ListingBooking',
+    required: false, // Optional initially
+  },
   rating: {
     type: Number,
     default: 0,
@@ -77,7 +82,7 @@ const ListingSchema = new mongoose.Schema({
       },
       message: 'Rating must be between 0 and 5.',
     },
-    get: (v) => parseFloat(v.toFixed(2)), 
+    get: (v) => parseFloat(v.toFixed(2)),
     set: (v) => parseFloat(v.toFixed(2)),
   },
 });
