@@ -59,10 +59,13 @@ exports.getListingById = async (req, res) => {
 exports.toggleFavoriteListing = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { listingId } = req.params;
+    const listingId  = req.params.listingId;
+    //console.log(userId)
 
     // Check if the listing exists
     const listing = await Listing.findById(listingId);
+    console.log(listing)
+    
     if (!listing) {
       return res.status(404).json({ error: 'Listing not found.' });
     }
@@ -82,13 +85,13 @@ exports.toggleFavoriteListing = async (req, res) => {
       );
 
       // Decrement the favorite_count on the listing
-      listing.favorite_count = Math.max(0, (listing.favorite_count || 0) - 1);
+      listing.favourite_count = Math.max(0, (listing.favourite_count || 0) - 1);
     } else {
       // Add to favorites
       favouriteListings.favourites.push(listingId);
 
       // Increment the favorite_count on the listing
-      listing.favorite_count = (listing.favorite_count || 0) + 1;
+      listing.favourite_count = (listing.favourite_count || 0) + 1;
     }
 
     await favouriteListings.save();

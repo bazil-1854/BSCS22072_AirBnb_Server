@@ -8,7 +8,7 @@ const router = express.Router();
 router.get('/listings', getListings);
 router.get('/listings/:id', authenticate, getListingById);
  
-router.post('/listings/:listingId/toggle-favorite', authenticate, toggleFavoriteListing);
+router.post('/listings/:listingId/toggle-favorite',authenticate, toggleFavoriteListing);
 
 
 module.exports = router;
