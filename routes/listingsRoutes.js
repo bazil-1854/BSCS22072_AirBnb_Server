@@ -1,10 +1,14 @@
 const express = require('express');
-const { getListings, getListingById } = require('../controllers/listingsController');
+const { getListings, getListingById, toggleFavoriteListing } = require('../controllers/listingsController');
+const authenticate = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
 // GET Listings with Pagination
 router.get('/listings', getListings);
 router.get('/listings/:id', getListingById);
+ 
+router.post('/listings/:listingId/toggle-favorite', authenticate, toggleFavoriteListing);
+
 
 module.exports = router;

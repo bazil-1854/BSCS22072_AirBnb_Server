@@ -2,6 +2,7 @@ const User = require('../models/user');
 const jwt = require('jsonwebtoken');
 const HostListing = require('../models//hosted_listings');
 const GuestBookings = require('../models/guest_bookings');
+const FavouriteListings = require('../models/favourite_listings');
 const bcrypt = require('bcryptjs');
 
 
@@ -37,6 +38,13 @@ exports.register = async (req, res) => {
         _id: newUser._id
       });
       await guestListings.save(); 
+
+      const favouriteListings = new FavouriteListings({
+        _id: newUser._id
+      });
+      await favouriteListings.save(); 
+
+      
     }
 
     await newUser.save();
