@@ -70,16 +70,24 @@ exports.createBooking = async (req, res) => {
 
 exports.getBlockedDates = async (req, res) => {
   try {
-    const { listingID } = req.body;
-
+    const listingId  = req.params.listingId;
+    console.log(listingId);
     // Find the ListingBooking document for the listing
-    const listingBooking = await ListingBooking.findOne({ listingID });
+    const listingBooking = await ListingBooking.findById(listingId);
     if (!listingBooking) {
       return res.status(404).json({ error: 'Listing not found' });
     }
 
-    // Fetch all bookings for this listing
-    const bookings = await Booking.find({ _id: { $in: listingBooking.bookings } });
+    // Check if bookings array is empty
+    if (!listingBooking.bookings || listingBooking.bookings.length === 0) {
+      return res.status(200).json({ message: 'No bookings found', blockedDates: [] });
+    } 
+    // Fetch bookings using findById for each ID in the bookings array
+    const bookings = await Promise.all(
+      listingBooking.bookings.map(async (bookingId) => {
+        return await Booking.findById(bookingId).lean();
+      })
+    ); 
 
     // Collect all blocked dates
     let blockedDates = [];
@@ -91,10 +99,11 @@ exports.getBlockedDates = async (req, res) => {
       for (let date = checkIn; date <= checkOut; date.setDate(date.getDate() + 1)) {
         blockedDates.push(new Date(date)); // Add each date to the blockedDates array
       }
-    });
+    }); ;
 
     res.status(200).json({ blockedDates });
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Error fetching blocked dates:', error);
     res.status(500).json({ error: 'Server error. Please try again later.' });
   }

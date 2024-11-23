@@ -3,6 +3,7 @@ const User = require('../models/user');
 const ListingBooking = require('../models/listing_bookings');
 const HostingListings = require('../models/hosted_listings');
 const user = require('../models/user');
+const ListingReview = require('../models/listings_reviews');
 
 /*exports.addListing = async (req, res) => {
   try {
@@ -67,6 +68,7 @@ exports.addListing = async (req, res) => {
       address,
       amenities,
       images,
+      bookingsMade: 0,
       hostID: userId,
     });
     await newListing.save();
@@ -94,11 +96,19 @@ exports.addListing = async (req, res) => {
       await user.save();
     }
 
+    // Create a ListingReview document for the newly added listing
+    const newListingReview = new ListingReview({
+      _id: newListing._id, // Use the same ID as the listing
+      reviews: [], // Initialize with an empty reviews array
+    });
+    await newListingReview.save();
+
     res.status(201).json({
       message: 'Listing and listing booking added successfully!',
-      listing: newListing, 
+      listing: newListing,
     });
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Error adding listing:', error);
     res.status(500).json({ error: 'Server error. Please try again later.' });
   }
