@@ -23,6 +23,9 @@ app.use('/air-bnb/manage-bookings', require("./routes/hostBookingsRoute"));
 
 // add  alisintg
 app.use('/air-bnb/hosting', require("./routes/hostListingsRoute"));
+
+app.use('/air-bnb/listing-rating', require("./routes/listingRatingRoutes"));
+
  
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { addListing, getHostedListings, updateListing, deleteListing } = require('../controllers/hostListingsController');
-const authenticate  = require('../middleware/authMiddleware'); // Assuming you have authentication middleware
+const authenticate  = require('../middleware/authMiddleware');
 
 // POST route for adding a new listing
 router.post('/add-listing', authenticate, addListing);
