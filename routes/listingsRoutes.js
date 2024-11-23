@@ -6,7 +6,7 @@ const router = express.Router();
 
 // GET Listings with Pagination
 router.get('/listings', getListings);
-router.get('/listings/:id', getListingById);
+router.get('/listings/:id', authenticate, getListingById);
  
 router.post('/listings/:listingId/toggle-favorite', authenticate, toggleFavoriteListing);
 

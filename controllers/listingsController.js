@@ -25,6 +25,7 @@ exports.getListings = async (req, res) => {
 exports.getListingById = async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user.id;
 
     if (!id || !id.match(/^[0-9a-fA-F]{24}$/)) {
       return res.status(400).json({ error: 'Invalid listing ID' });
@@ -35,8 +36,19 @@ exports.getListingById = async (req, res) => {
     if (!listing) {
       return res.status(404).json({ error: 'Listing not found' });
     }
+    // Check if the listing is in the user's favorites
+    let isLiked = false;
+    const favouriteListings = await FavouriteListings.findById(userId);
+    if (favouriteListings && favouriteListings.favourites.includes(id)) {
+      isLiked = true;
+    }
 
-    res.status(200).json(listing);
+    res.status(200).json({
+      listing,
+      isLiked,
+    });
+
+    //res.status(200).json(listing);
   }
   catch (error) {
     console.error(error);
@@ -46,8 +58,8 @@ exports.getListingById = async (req, res) => {
 
 exports.toggleFavoriteListing = async (req, res) => {
   try {
-    const userId = req.user.id; // User's ID from the authenticated request
-    const { listingId } = req.params; // Listing ID from route parameters
+    const userId = req.user.id;
+    const { listingId } = req.params;
 
     // Check if the listing exists
     const listing = await Listing.findById(listingId);
@@ -88,7 +100,7 @@ exports.toggleFavoriteListing = async (req, res) => {
         : 'Listing added to favorites.',
       favorites: favouriteListings.favourites,
     });
-  } 
+  }
   catch (error) {
     console.error('Error toggling favorite listing:', error);
     res.status(500).json({ error: 'Failed to toggle favorite listing. Please try again.' });
