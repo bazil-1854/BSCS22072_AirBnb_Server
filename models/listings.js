@@ -25,6 +25,10 @@ const ListingSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  bookingsMade: {
+    type: Number,
+    required: true,
+  },
   address: {
     street: {
       type: String,

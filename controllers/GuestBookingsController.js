@@ -182,13 +182,14 @@ exports.finalizeBooking = async (req, res) => {
 
     if (!listing.bookingsMade) {
       listing.bookingsMade = 1; // Initialize bookingsMade if it doesn't exist
-    } else {
+    }
+    else {
       listing.bookingsMade += 1; // Increment bookingsMade
     }
     await listing.save();
 
     // Step 5: Update the "bookingsMade" attribute in the HostBookings collection
-    const hostId = listing.hostId; // Host ID from the listing
+    const hostId = listing.hostID; // Host ID from the listing
     let hostBooking = await HostBooking.findById(hostId);
     if (!hostBooking) {
       // Create a new HostBooking document if it doesn't exist
@@ -196,18 +197,26 @@ exports.finalizeBooking = async (req, res) => {
         _id: hostId,
         bookingsMade: 1, // Initialize bookingsMade
       });
-    } else {
+    }
+    else {
       // Increment bookingsMade
       if (!hostBooking.bookingsMade) {
         hostBooking.bookingsMade = 1;
-      } else {
+      }
+      else {
         hostBooking.bookingsMade += 1;
+      }
+      // Remove the booking ID from the bookings array if it exists
+      const bookingIndex = hostBooking.bookings.indexOf(bookingId); // Assuming bookingId is defined earlier
+      if (bookingIndex > -1) {
+        hostBooking.bookings.splice(bookingIndex, 1);
       }
     }
     await hostBooking.save();
 
     res.status(200).json({ message: 'Booking finalized successfully.' });
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Error finalizing booking:', error);
     res.status(500).json({ error: 'Failed to finalize booking. Please try again later.' });
   }

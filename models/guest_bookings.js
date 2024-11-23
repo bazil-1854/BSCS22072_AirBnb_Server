@@ -4,6 +4,7 @@ const GuestListingBookingSchema = new mongoose.Schema({
   bookingHistory: {
     type: [
       {
+
         listingId: { type: mongoose.Schema.Types.ObjectId, ref: 'Listings', required: true },
         checkIn: { type: Date, required: true },
         checkOut: { type: Date, required: true },
@@ -15,6 +16,7 @@ const GuestListingBookingSchema = new mongoose.Schema({
         totalAmount: { type: Number, required: true },
       },
     ],
+    _id: false,
     default: [],
   },
   bookings: {
