@@ -77,6 +77,10 @@ const ListingSchema = new mongoose.Schema({
     ref: 'ListingBooking',
     required: false, // Optional initially
   },
+  favourite_count: {
+    type: Number,
+    default: 0,
+  },
   rating: {
     type: Number,
     default: 0,

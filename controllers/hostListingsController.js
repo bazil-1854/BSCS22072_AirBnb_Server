@@ -69,6 +69,7 @@ exports.addListing = async (req, res) => {
       amenities,
       images,
       bookingsMade: 0,
+      favourite_count: 0,
       hostID: userId,
     });
     await newListing.save();
