@@ -1,4 +1,5 @@
 const Booking = require('../models/bookings');
+const Listing = require('../models/listings');
 const ListingBooking = require('../models/listing_bookings');
 const GuestBooking = require('../models/guest_bookings');
 const HostBooking = require('../models/host_bookings');
@@ -121,5 +122,93 @@ exports.getGuestBookings = async (req, res) => {
   catch (error) {
     console.error('Error fetching guest bookings:', error);
     res.status(500).json({ error: 'Failed to fetch guest bookings.' });
+  }
+};
+
+
+exports.finalizeBooking = async (req, res) => {
+  try {
+    const { bookingId } = req.body;
+    const userId = req.user.id;
+
+    // Step 1: Fetch booking details
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({ error: 'Booking not found.' });
+    }
+
+    // Create the booking object to be stored
+    const bookingObject = {
+      listingId: booking.listingId,
+      checkIn: booking.checkIn,
+      checkOut: booking.checkOut,
+      guests: booking.guests,
+      totalAmount: booking.totalAmount,
+    };
+
+    // Step 2: Update GuestBookings document
+    let guestBooking = await GuestBooking.findById(userId);
+    if (!guestBooking) {
+      // Create a new GuestBooking document if it doesn't exist
+      guestBooking = new GuestBooking({
+        _id: userId,
+        bookingHistory: [bookingObject],
+      });
+    } else {
+      // Push the bookingObject into the bookingHistory array
+      guestBooking.bookingHistory.push(bookingObject);
+    }
+    await guestBooking.save();
+
+    // Step 3: Update ListingBookings document
+    let listingBooking = await ListingBooking.findById(booking.listingId);
+    if (!listingBooking) {
+      // Create a new ListingBooking document if it doesn't exist
+      listingBooking = new ListingBooking({
+        _id: booking.listingId,
+        previousBookings: [bookingObject],
+      });
+    } else {
+      // Push the bookingObject into the previousBookings array
+      listingBooking.previousBookings.push(bookingObject);
+    }
+    await listingBooking.save();
+
+    // Step 4: Update the "bookingsMade" attribute in the Listings collection
+    const listing = await Listing.findById(booking.listingId);
+    if (!listing) {
+      return res.status(404).json({ error: 'Listing not found.' });
+    }
+
+    if (!listing.bookingsMade) {
+      listing.bookingsMade = 1; // Initialize bookingsMade if it doesn't exist
+    } else {
+      listing.bookingsMade += 1; // Increment bookingsMade
+    }
+    await listing.save();
+
+    // Step 5: Update the "bookingsMade" attribute in the HostBookings collection
+    const hostId = listing.hostId; // Host ID from the listing
+    let hostBooking = await HostBooking.findById(hostId);
+    if (!hostBooking) {
+      // Create a new HostBooking document if it doesn't exist
+      hostBooking = new HostBooking({
+        _id: hostId,
+        bookingsMade: 1, // Initialize bookingsMade
+      });
+    } else {
+      // Increment bookingsMade
+      if (!hostBooking.bookingsMade) {
+        hostBooking.bookingsMade = 1;
+      } else {
+        hostBooking.bookingsMade += 1;
+      }
+    }
+    await hostBooking.save();
+
+    res.status(200).json({ message: 'Booking finalized successfully.' });
+  } catch (error) {
+    console.error('Error finalizing booking:', error);
+    res.status(500).json({ error: 'Failed to finalize booking. Please try again later.' });
   }
 };
