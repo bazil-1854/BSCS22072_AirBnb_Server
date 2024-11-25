@@ -45,6 +45,27 @@ exports.addRating = async (req, res) => {
   }
 };
 
+exports.getRatingAndReviewCount = async (req, res) => {
+  try { 
+    const  listingId  = req.params.listingId;
+    let item = await ListingReview.findById(listingId).select('averageRating reviews');
+
+    if (!item) {
+      return res.status(404).json({ message: 'Listing Reviews not found' });
+    }
+
+    const response = {
+      averageRating: item.averageRating,
+      arraySize: item.reviews.length, 
+    };
+
+    return res.json(response);
+  } 
+  catch (error) {
+    console.error('Error finding item:', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
 
 exports.getPaginatedReviews = async (req, res) => {
   try {
@@ -66,10 +87,10 @@ exports.getPaginatedReviews = async (req, res) => {
     // Fetch user details for each review
     const reviewsWithUserDetails = await Promise.all(
       paginatedReviews.map(async (review) => {
-        const user = await User.findById(review.userID).select('username profilePicture');
+        const user = await User.findById(review.userID).select('username profilePicture location');
         return {
           ...review._doc, // Spread the review details
-          user: user ? { name: user.name, profilePicture: user.profilePicture } : null,
+          user: user ? { name: user.name, profilePicture: user.profilePicture,location: user.location } : null,
         };
       })
     );
