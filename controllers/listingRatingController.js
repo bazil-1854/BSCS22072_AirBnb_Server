@@ -11,14 +11,12 @@ exports.addRating = async (req, res) => {
       return res.status(400).json({ error: 'Invalid data. Rating must be between 1 and 5.' });
     } 
 
-    // Find the listing review document or create a new one
     let listingReview = await ListingReview.findById(listingId);
 
     if (!listingReview) {
       listingReview = new ListingReview({ _id: listingId, reviews: [], averageRating: 0 });
     }
-
-    // Add the new review to the reviews array
+ 
     const newReview = {
       rating: parseFloat(rating.toFixed(2)),
       review,
@@ -26,8 +24,7 @@ exports.addRating = async (req, res) => {
     };
 
     listingReview.reviews.push(newReview);
-
-    // Calculate the new average rating
+ 
     const totalRatings = listingReview.reviews.length;
     const totalScore = listingReview.reviews.reduce((sum, rev) => sum + rev.rating, 0);
     listingReview.averageRating = parseFloat((totalScore / totalRatings).toFixed(2));
@@ -78,18 +75,16 @@ exports.getPaginatedReviews = async (req, res) => {
     if (!listingReview) {
       return res.status(404).json({ error: 'Listing reviews not found.' });
     }
-
-    // Pagination logic
+ 
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + Number(limit);
     const paginatedReviews = listingReview.reviews.slice(startIndex, endIndex);
-
-    // Fetch user details for each review
+ 
     const reviewsWithUserDetails = await Promise.all(
       paginatedReviews.map(async (review) => {
         const user = await User.findById(review.userID).select('username profilePicture location');
         return {
-          ...review._doc, // Spread the review details
+          ...review._doc, 
           user: user ? { name: user.name, profilePicture: user.profilePicture,location: user.location } : null,
         };
       })

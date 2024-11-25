@@ -6,10 +6,9 @@ const HostBooking = require('../models/host_bookings');
 
 exports.createBooking = async (req, res) => {
   try {
-    const userId = req.user.id; // Extract user ID from middleware
+    const userId = req.user.id;  
     const { listingId, hostId, checkIn, checkOut, guests, totalAmount, specialRequests } = req.body;
-
-    // Create the new booking
+ 
     const newBooking = new Booking({
       listingId,
       userID: userId,
@@ -20,18 +19,15 @@ exports.createBooking = async (req, res) => {
       specialRequests,
     });
     await newBooking.save();
-
-    // Update the ListingBooking document
+ 
     const listingBooking = await ListingBooking.findById(listingId);
     if (!listingBooking) {
       return res.status(404).json({ error: 'Listing\'s booking document not found.' });
     }
-
-    // Push the new booking ID into the bookings array of ListingBooking
+ 
     listingBooking.bookings.push(newBooking._id);
     await listingBooking.save();
-
-    // Update the GuestBooking document
+ 
     const guestBooking = await GuestBooking.findById(userId);
     if (!guestBooking) {
       return res.status(404).json({ error: 'User guest booking document not found.' });
@@ -39,20 +35,17 @@ exports.createBooking = async (req, res) => {
 
     guestBooking.bookings.push(newBooking._id);
     await guestBooking.save();
-
-    // Update or Create the HostBooking document
+ 
     const hostBooking = await HostBooking.findById(hostId);
 
-    if (!hostBooking) {
-      // If no document exists, create a new one
+    if (!hostBooking) { 
       const newHostBooking = new HostBooking({
         _id: hostId,
         bookings: [newBooking._id],
       });
       await newHostBooking.save();
     }
-    else {
-      // If the document exists, push the booking ID
+    else { 
       hostBooking.bookings.push(newBooking._id);
       await hostBooking.save();
     }
@@ -120,8 +113,7 @@ exports.getGuestBookings = async (req, res) => {
     if (!guestBookings) {
       return res.status(404).json({ message: 'No bookings found for this user.' });
     }
-
-    // Fetch booking details for each booking ID in the array
+ 
     const bookingsDetails = await Promise.all(
       guestBookings.bookings.map((bookingId) => Booking.findById(bookingId))
     );
@@ -139,14 +131,11 @@ exports.finalizeBooking = async (req, res) => {
   try {
     const { bookingId } = req.body;
     const userId = req.user.id;
-
-    // Step 1: Fetch booking details
+ 
     const booking = await Booking.findById(bookingId);
     if (!booking) {
       return res.status(404).json({ error: 'Booking not found.' });
-    }
-
-    // Create the booking object to be stored
+    } 
     const bookingObject = {
       listingId: booking.listingId,
       checkIn: booking.checkIn,
@@ -154,69 +143,61 @@ exports.finalizeBooking = async (req, res) => {
       guests: booking.guests,
       totalAmount: booking.totalAmount,
     };
-
-    // Step 2: Update GuestBookings document
+ 
     let guestBooking = await GuestBooking.findById(userId);
-    if (!guestBooking) {
-      // Create a new GuestBooking document if it doesn't exist
+    if (!guestBooking) { 
       guestBooking = new GuestBooking({
         _id: userId,
         bookingHistory: [bookingObject],
       });
-    } else {
-      // Push the bookingObject into the bookingHistory array
+    } else { 
       guestBooking.bookingHistory.push(bookingObject);
     }
     await guestBooking.save();
 
-    // Step 3: Update ListingBookings document
+    // Updatinge ListingBookings document
     let listingBooking = await ListingBooking.findById(booking.listingId);
-    if (!listingBooking) {
-      // Create a new ListingBooking document if it doesn't exist
+    if (!listingBooking) { 
       listingBooking = new ListingBooking({
         _id: booking.listingId,
         previousBookings: [bookingObject],
       });
-    } else {
-      // Push the bookingObject into the previousBookings array
+    } 
+    else { 
       listingBooking.previousBookings.push(bookingObject);
     }
     await listingBooking.save();
-
-    // Step 4: Update the "bookingsMade" attribute in the Listings collection
+ 
     const listing = await Listing.findById(booking.listingId);
     if (!listing) {
       return res.status(404).json({ error: 'Listing not found.' });
     }
 
     if (!listing.bookingsMade) {
-      listing.bookingsMade = 1; // Initialize bookingsMade if it doesn't exist
+      listing.bookingsMade = 1;  
     }
     else {
-      listing.bookingsMade += 1; // Increment bookingsMade
+      listing.bookingsMade += 1; 
     }
     await listing.save();
-
-    // Step 5: Update the "bookingsMade" attribute in the HostBookings collection
-    const hostId = listing.hostID; // Host ID from the listing
+ 
+    const hostId = listing.hostID; 
     let hostBooking = await HostBooking.findById(hostId);
-    if (!hostBooking) {
-      // Create a new HostBooking document if it doesn't exist
+    if (!hostBooking) { 
       hostBooking = new HostBooking({
         _id: hostId,
-        bookingsMade: 1, // Initialize bookingsMade
+        bookingsMade: 1, 
       });
     }
     else {
-      // Increment bookingsMade
+      // Increment bookingsMade 
       if (!hostBooking.bookingsMade) {
         hostBooking.bookingsMade = 1;
       }
       else {
         hostBooking.bookingsMade += 1;
-      }
-      // Remove the booking ID from the bookings array if it exists
-      const bookingIndex = hostBooking.bookings.indexOf(bookingId); // Assuming bookingId is defined earlier
+      } 
+      const bookingIndex = hostBooking.bookings.indexOf(bookingId);  
       if (bookingIndex > -1) {
         hostBooking.bookings.splice(bookingIndex, 1);
       }

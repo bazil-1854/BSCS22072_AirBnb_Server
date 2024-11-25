@@ -1,5 +1,6 @@
 const Listing = require('../models/listings');
 const FavouriteListings = require('../models/favourite_listings');
+const User = require('../models/user');
 
 exports.getListings = async (req, res) => {
   try {
@@ -26,15 +27,24 @@ exports.getListingById = async (req, res) => {
     const { id } = req.params;
     const userId = req.user.id;
 
-    if (!id || !id.match(/^[0-9a-fA-F]{24}$/)) {
+    if (!id) {
       return res.status(400).json({ error: 'Invalid listing ID' });
     }
 
+    // Find the listing by ID
     const listing = await Listing.findById(id);
 
     if (!listing) {
       return res.status(404).json({ error: 'Listing not found' });
     }
+
+    // Fetch host details using hostId from the listing
+    const host = await User.findById(listing.hostID, 'createdAt username email');
+
+    if (!host) {
+      return res.status(404).json({ error: 'Host not found' });
+    }
+
     // Check if the listing is in the user's favorites
     let isLiked = false;
     const favouriteListings = await FavouriteListings.findById(userId);
@@ -42,13 +52,17 @@ exports.getListingById = async (req, res) => {
       isLiked = true;
     }
 
+    // Respond with listing, host details, and like status
     res.status(200).json({
       listing,
       isLiked,
+      hostDetails: {
+        createdAt: host.createdAt,
+        name: host.username,
+        email: host.email,
+      },
     });
- 
-  }
-  catch (error) {
+  } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Server error' });
   }
@@ -57,11 +71,11 @@ exports.getListingById = async (req, res) => {
 exports.toggleFavoriteListing = async (req, res) => {
   try {
     const userId = req.user.id;
-    const listingId  = req.params.listingId; 
+    const listingId = req.params.listingId;
 
     // Check if the listing exists
-    const listing = await Listing.findById(listingId); 
-    
+    const listing = await Listing.findById(listingId);
+
     if (!listing) {
       return res.status(404).json({ error: 'Listing not found.' });
     }
@@ -80,7 +94,7 @@ exports.toggleFavoriteListing = async (req, res) => {
       );
       // Decrement the favorite_count on the listing
       listing.favourite_count = Math.max(0, (listing.favourite_count || 0) - 1);
-    } 
+    }
     else {
       favouriteListings.favourites.push(listingId);
       // Increment the favorite_count on the listing

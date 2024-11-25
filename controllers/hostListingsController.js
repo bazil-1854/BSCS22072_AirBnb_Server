@@ -74,11 +74,9 @@ exports.addListing = async (req, res) => {
     });
     await newListing.save();
 
-
-    // Update the User's hosted_listings if applicable
+ 
     const user = await User.findById(userId).select('role hosted_listings');
-    if (user && user.role === 'Host') {
-      // Create a new ListingBooking document and link it with the Listing
+    if (user && user.role === 'Host') { 
       const newListingBooking = new ListingBooking({
         _id: newListing._id,
         bookings: [],
@@ -96,11 +94,10 @@ exports.addListing = async (req, res) => {
       user.hosted_listings = hostingListingsId;
       await user.save();
     }
-
-    // Create a ListingReview document for the newly added listing
+ 
     const newListingReview = new ListingReview({
-      _id: newListing._id, // Use the same ID as the listing
-      reviews: [], // Initialize with an empty reviews array
+      _id: newListing._id,  
+      reviews: [], 
     });
     await newListingReview.save();
 
