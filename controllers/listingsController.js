@@ -30,29 +30,25 @@ exports.getListingById = async (req, res) => {
     if (!id) {
       return res.status(400).json({ error: 'Invalid listing ID' });
     }
-
-    // Find the listing by ID
+ 
     const listing = await Listing.findById(id);
 
     if (!listing) {
       return res.status(404).json({ error: 'Listing not found' });
     }
-
-    // Fetch host details using hostId from the listing
+ 
     const host = await User.findById(listing.hostID, 'createdAt username email');
 
     if (!host) {
       return res.status(404).json({ error: 'Host not found' });
     }
-
-    // Check if the listing is in the user's favorites
+ 
     let isLiked = false;
     const favouriteListings = await FavouriteListings.findById(userId);
     if (favouriteListings && favouriteListings.favourites.includes(id)) {
       isLiked = true;
     }
-
-    // Respond with listing, host details, and like status
+ 
     res.status(200).json({
       listing,
       isLiked,
