@@ -4,60 +4,13 @@ const ListingBooking = require('../models/listing_bookings');
 const HostingListings = require('../models/hosted_listings');
 const user = require('../models/user');
 const ListingReview = require('../models/listings_reviews');
-
-/*exports.addListing = async (req, res) => {
-  try {
-    const { name, summary, property_type, bedrooms, bathrooms, price, address, amenities, images } = req.body;
-    const userId = req.user.id;
-
-    // Create a new Listing
-    const newListing = new Listing({
-      name,
-      summary,
-      property_type,
-      bedrooms,
-      bathrooms,
-      price,
-      address,
-      amenities,
-      images,
-      hostID: userId,
-    });
-    await newListing.save();
-
-    const user = await User.findById(userId).select('role hosted_listings');
-
-    if (user && user.role === 'Host') {
-      const hostingListingsId = user.hosted_listings;
-
-      const hostingListingsDoc = await HostingListings.findById(hostingListingsId);
-
-      if (hostingListingsDoc) {
-        hostingListingsDoc.listings.push(newListing._id);
-        await hostingListingsDoc.save();
-      }
-
-      user.hosted_listings = hostingListingsId;
-      await user.save();
-    }
-
-    res.status(201).json({
-      message: 'Listing added successfully!',
-      listing: newListing,
-    });
-  } catch (error) {
-    console.error('Error adding listing:', error);
-    res.status(500).json({ error: 'Server error. Please try again later.' });
-  }
-};*/
-
+const path = require('path');
 
 exports.addListing = async (req, res) => {
   try {
     const { name, summary, property_type, bedrooms, bathrooms, price, address, amenities, images } = req.body;
     const userId = req.user.id;
 
-    // Create a new Listing
     const newListing = new Listing({
       name,
       summary,
@@ -74,9 +27,9 @@ exports.addListing = async (req, res) => {
     });
     await newListing.save();
 
- 
+
     const user = await User.findById(userId).select('role hosted_listings');
-    if (user && user.role === 'Host') { 
+    if (user && user.role === 'Host') {
       const newListingBooking = new ListingBooking({
         _id: newListing._id,
         bookings: [],
@@ -94,10 +47,10 @@ exports.addListing = async (req, res) => {
       user.hosted_listings = hostingListingsId;
       await user.save();
     }
- 
+
     const newListingReview = new ListingReview({
-      _id: newListing._id,  
-      reviews: [], 
+      _id: newListing._id,
+      reviews: [],
     });
     await newListingReview.save();
 
@@ -111,6 +64,90 @@ exports.addListing = async (req, res) => {
     res.status(500).json({ error: 'Server error. Please try again later.' });
   }
 };
+
+exports.addListingWithImages = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { name, summary, property_type, bedrooms, bathrooms, price, address, amenities } = req.body;
+
+    // Validate uploaded files
+    if (!req.files || !req.files.placeImage || !req.files.coverImage || !req.files.additionalImages) {
+      return res.status(400).json({ error: 'All images (place, cover, and additional) are required' });
+    }
+
+    const baseImageUrl = process.env.SERVER_URL;
+    console.log(baseImageUrl)
+
+    /*const placeImagePath =  path.posix.join(baseImageUrl, 'listing_images', req.files.placeImage[0].filename);
+    const coverImagePath =  path.posix.join(baseImageUrl, 'listing_images', req.files.coverImage[0].filename);
+    const additionalImagePaths = req.files.additionalImages.map((file) =>
+       path.posix.join(baseImageUrl, 'listing_images', file.filename)
+    );*/
+
+    const placeImagePath = baseImageUrl + 'listing_images/' + req.files.placeImage[0].filename;
+    const coverImagePath = baseImageUrl + 'listing_images/' + req.files.coverImage[0].filename;
+    const additionalImagePaths = req.files.additionalImages.map((file) =>
+      baseImageUrl + 'listing_images/' + file.filename
+    );
+
+    const newListing = new Listing({
+      name,
+      summary,
+      property_type,
+      bedrooms,
+      bathrooms,
+      price,
+      address,
+      amenities,
+      images: {
+        placePicture: placeImagePath,
+        coverPicture: coverImagePath,
+        additionalPictures: additionalImagePaths,
+      },
+      bookingsMade: 0,
+      favourite_count: 0,
+      hostID: userId,
+    });
+    await newListing.save();
+
+    const user = await User.findById(userId).select('role hosted_listings');
+    if (user && user.role === 'Host') {
+      const newListingBooking = new ListingBooking({
+        _id: newListing._id,
+        bookings: [],
+      });
+      await newListingBooking.save();
+
+      const hostingListingsId = user.hosted_listings;
+      const hostingListingsDoc = await HostingListings.findById(hostingListingsId);
+
+      if (hostingListingsDoc) {
+        hostingListingsDoc.listings.push(newListing._id);
+        await hostingListingsDoc.save();
+      }
+
+      user.hosted_listings = hostingListingsId;
+      await user.save();
+    }
+
+    
+    const newListingReview = new ListingReview({
+      _id: newListing._id,
+      reviews: [],
+    });
+    await newListingReview.save();
+
+    res.status(201).json({
+      message: 'Listing with images added successfully!',
+      listing: newListing,
+    });
+  } 
+  catch (error) {
+    console.error('Error adding listing:', error);
+    res.status(500).json({ error: 'Server error. Please try again later.' });
+  }
+};
+
 
 exports.getHostedListings = async (req, res) => {
   try {

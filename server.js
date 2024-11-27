@@ -10,7 +10,7 @@ connectDB();
 const app = express();
 
 
-app.use('/images', express.static(path.join(__dirname, 'images')));
+app.use('/listing_images', express.static(path.join(__dirname, 'listing_images')));
 
 app.use(cors());
 app.use(express.json());
@@ -20,6 +20,7 @@ app.use('/air-bnb/home', require("./routes/listingsRoutes"));
 
 
 app.use('/air-bnb/auth', require("./routes/authRoute"));
+
 app.use('/air-bnb/profile', require("./routes/profileRoute"));
 
 app.use('/air-bnb/reservation', require("./routes/guestBookingRoute"));
