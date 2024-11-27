@@ -58,7 +58,8 @@ exports.getListingById = async (req, res) => {
         email: host.email,
       },
     });
-  } catch (error) {
+  } 
+  catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Server error' });
   }
