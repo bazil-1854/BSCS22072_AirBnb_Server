@@ -49,6 +49,7 @@ exports.getListingById = async (req, res) => {
       isLiked = true;
     }
  
+    //console.log(host.username)
     res.status(200).json({
       listing,
       isLiked,
