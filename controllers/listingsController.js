@@ -8,8 +8,11 @@ exports.getListings = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const listings = await Listing.find().skip(skip).limit(limit).exec();
-    const totalListings = await Listing.countDocuments();
+    const category = req.body.category || req.query.category || 'All';
+    const query = category === 'All' ? {} : { category };
+    const listings = await Listing.find(query).skip(skip).limit(limit).exec();
+
+    const totalListings = await Listing.countDocuments(query);
 
     res.status(200).json({
       listings,
@@ -22,6 +25,8 @@ exports.getListings = async (req, res) => {
   }
 };
 
+
+
 exports.getListingById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -30,25 +35,25 @@ exports.getListingById = async (req, res) => {
     if (!id) {
       return res.status(400).json({ error: 'Invalid listing ID' });
     }
- 
+
     const listing = await Listing.findById(id);
 
     if (!listing) {
       return res.status(404).json({ error: 'Listing not found' });
     }
- 
+
     const host = await User.findById(listing.hostID, 'createdAt username email');
 
     if (!host) {
       return res.status(404).json({ error: 'Host not found' });
     }
- 
+
     let isLiked = false;
     const favouriteListings = await FavouriteListings.findById(userId);
     if (favouriteListings && favouriteListings.favourites.includes(id)) {
       isLiked = true;
     }
- 
+
     //console.log(host.username)
     res.status(200).json({
       listing,
@@ -59,7 +64,43 @@ exports.getListingById = async (req, res) => {
         email: host.email,
       },
     });
-  } 
+  }
+  catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+exports.getListingById_for_users = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ error: 'Invalid listing ID' });
+    }
+
+    const listing = await Listing.findById(id);
+
+    if (!listing) {
+      return res.status(404).json({ error: 'Listing not found' });
+    }
+
+    const host = await User.findById(listing.hostID, 'createdAt username email');
+
+    if (!host) {
+      return res.status(404).json({ error: 'Host not found' });
+    }
+
+    //console.log(host.username)
+    res.status(200).json({
+      listing,
+      hostDetails: {
+        createdAt: host.createdAt,
+        name: host.username,
+        email: host.email,
+      },
+    });
+  }
   catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Server error' });

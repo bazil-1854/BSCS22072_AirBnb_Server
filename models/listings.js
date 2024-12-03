@@ -75,11 +75,15 @@ const ListingSchema = new mongoose.Schema({
   listingBookingID: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'ListingBooking',
-    required: false, // Optional initially
+    required: false,
   },
   favourite_count: {
     type: Number,
     default: 0,
+  },
+  category: {
+    type: String,
+    default: 'Apartment',
   },
   rating: {
     type: Number,
