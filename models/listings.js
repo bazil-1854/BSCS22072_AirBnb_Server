@@ -81,6 +81,16 @@ const ListingSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  maxGuests: {
+    type: Number,
+    default: 2, 
+    validate: {
+      validator: function (v) {
+        return v > 0;
+      },
+      message: 'Number of guests must be greater than 0.',
+    },
+  },
   category: {
     type: String,
     default: 'Apartment',
