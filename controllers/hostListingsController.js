@@ -8,13 +8,15 @@ const path = require('path');
 
 exports.addListing = async (req, res) => {
   try {
-    const { name, summary, property_type, bedrooms, bathrooms, price, address, amenities, images } = req.body;
+    const { name, summary, property_type, bedrooms, maxGuests,category, bathrooms, price, address, amenities, images } = req.body;
     const userId = req.user.id;
 
     const newListing = new Listing({
       name,
       summary,
+      category,
       property_type,
+      maxGuests,
       bedrooms,
       bathrooms,
       price,
@@ -68,7 +70,7 @@ exports.addListing = async (req, res) => {
 exports.addListingWithImages = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { name, summary, property_type, bedrooms, bathrooms, price, address, amenities } = req.body;
+    const { name, summary, property_type, maxGuests,category, bedrooms, bathrooms, price, address, amenities } = req.body;
 
     // Validate uploaded files
     if (!req.files || !req.files.placeImage || !req.files.coverImage || !req.files.additionalImages) {
@@ -94,7 +96,9 @@ exports.addListingWithImages = async (req, res) => {
       name,
       summary,
       property_type,
+      maxGuests,
       bedrooms,
+      category,
       bathrooms,
       price,
       address,

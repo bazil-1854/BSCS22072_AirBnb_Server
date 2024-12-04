@@ -25,6 +25,48 @@ exports.getListings = async (req, res) => {
   }
 };
 
+exports.getSearchedListings = async (req, res) => {
+  try {
+    const location = req.query.location || {};
+    const guests = parseInt(req.query.guests) || 1;
+
+    const suburb = location.suburb || '';
+    const country = location.country || '';
+    const street = location.street || '';
+
+    //console.log('Location Details:', location);
+    //console.log('Guests:', guests);
+
+    const query = {
+      $and: [
+        {
+          $or: [
+            { 'address.suburb': { $regex: suburb, $options: 'i' } },
+            { 'address.country': { $regex: country, $options: 'i' } },
+            { 'address.street': { $regex: street, $options: 'i' } },
+          ],
+        },
+        { maxGuests: { $lte: guests } },
+      ],
+    };
+
+    const listings = await Listing.find(query).exec();
+
+    if (listings.length === 0) {
+      return res.status(404).json({
+        message: 'No listings found matching the search criteria',
+      });
+    }
+
+    res.status(200).json({
+      listings,
+      totalListings: listings.length,
+    });
+  } 
+    catch (error) {
+    res.status(500).json({ message: 'Failed to fetch listings', error: error.message });
+  }
+};
 
 
 exports.getListingById = async (req, res) => {
