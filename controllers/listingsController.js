@@ -72,8 +72,7 @@ exports.getSearchedListings = async (req, res) => {
 exports.getListingById = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.id;
-
+    const userId = req.user.id; 
     if (!id) {
       return res.status(400).json({ error: 'Invalid listing ID' });
     }
@@ -95,7 +94,7 @@ exports.getListingById = async (req, res) => {
     if (favouriteListings && favouriteListings.favourites.includes(id)) {
       isLiked = true;
     }
-
+    //console.log(isLiked)
     //console.log(host.username)
     res.status(200).json({
       listing,
@@ -115,7 +114,7 @@ exports.getListingById = async (req, res) => {
 
 exports.getListingById_for_users = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params; 
 
     if (!id) {
       return res.status(400).json({ error: 'Invalid listing ID' });

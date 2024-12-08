@@ -41,11 +41,13 @@ exports.createBooking = async (req, res) => {
     if (!hostBooking) {
       const newHostBooking = new HostBooking({
         _id: hostId,
+        bookingsMade: 1,
         bookings: [newBooking._id],
       });
       await newHostBooking.save();
     }
     else {
+      hostBooking.bookingsMade += 1;
       hostBooking.bookings.push(newBooking._id);
       await hostBooking.save();
     }
@@ -102,19 +104,19 @@ exports.getBlockedDates = async (req, res) => {
 exports.getGuestBookings = async (req, res) => {
   try {
     const userId = req.user.id;
- 
+
     const guestBookings = await GuestBooking.findById(userId);
 
     if (!guestBookings) {
       return res.status(404).json({ message: 'No bookings found for this user.' });
     }
- 
+
     const bookingsDetails = await Promise.all(
       guestBookings.bookings.map(async (bookingId) => {
         const booking = await Booking.findById(bookingId);
 
         if (!booking) {
-          return null;  
+          return null;
         }
 
         const listing = await Listing.findById(booking.listingId).select('name property_type bedrooms bathrooms');
@@ -123,17 +125,17 @@ exports.getGuestBookings = async (req, res) => {
           ...booking.toObject(),
           listing: listing
             ? {
-                name: listing.name,
-                property_type: listing.property_type,
-                bedrooms: listing.bedrooms,
-                bathrooms: listing.bathrooms,
-              }
+              name: listing.name,
+              property_type: listing.property_type,
+              bedrooms: listing.bedrooms,
+              bathrooms: listing.bathrooms,
+            }
             : null,
         };
       })
     );
 
-    res.status(200).json({ bookings: bookingsDetails });  
+    res.status(200).json({ bookings: bookingsDetails });
   } catch (error) {
     console.error('Error fetching guest bookings:', error);
     res.status(500).json({ error: 'Failed to fetch guest bookings.' });
