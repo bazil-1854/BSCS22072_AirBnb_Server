@@ -56,7 +56,8 @@ exports.createBooking = async (req, res) => {
       message: 'Booking created successfully!',
       booking: newBooking,
     });
-  } catch (error) {
+  } 
+  catch (error) {
     console.error('Error creating booking:', error);
     res.status(500).json({ error: 'Server error. Please try again later.' });
   }
@@ -141,8 +142,6 @@ exports.getGuestBookings = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch guest bookings.' });
   }
 };
-
-
 
 exports.finalizeBooking = async (req, res) => {
   try {

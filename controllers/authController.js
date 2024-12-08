@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const HostListing = require('../models//hosted_listings');
 const GuestBookings = require('../models/guest_bookings');
 const FavouriteListings = require('../models/favourite_listings');
+const Notifications = require('../models/notifications');
 const bcrypt = require('bcryptjs');
 
 
@@ -42,12 +43,15 @@ exports.register = async (req, res) => {
       const favouriteListings = new FavouriteListings({
         _id: newUser._id
       });
-      await favouriteListings.save(); 
-
-      
+      await favouriteListings.save();
     }
-
     await newUser.save();
+
+    const UserNotifications = new Notifications({
+      _id: newUser._id
+    });
+
+    await UserNotifications.save();
 
     res.status(201).json({ message: 'User registered successfully' });
   } 
