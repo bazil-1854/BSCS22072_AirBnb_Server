@@ -20,7 +20,6 @@ exports.createBooking = async (req, res) => {
       totalAmount,
       specialRequests,
     });
-    await newBooking.save();
 
     const listingBooking = await ListingBooking.findById(listingId);
     if (!listingBooking) {
@@ -54,6 +53,7 @@ exports.createBooking = async (req, res) => {
       await hostBooking.save();
     }
 
+    await newBooking.save();
 
     // Notify the host
     const message = {

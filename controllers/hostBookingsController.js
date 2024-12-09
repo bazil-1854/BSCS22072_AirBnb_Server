@@ -4,41 +4,43 @@ const HostBookings = require('../models/host_bookings');
 const Booking = require('../models/bookings');
 const User = require('../models/user');
 
+const { sendMessageToUser } = require('../socket');
+
 // Get bookings for all host's listings with listing details
 exports.getHostBookings = async (req, res) => {
-    try {
-      const userId = req.user.id;
-   
-      const hostedBookings = await HostBookings.findById(userId);
-  
-      if (!hostedBookings) {
-        return res.status(404).json({ message: 'No bookings found for this host.' });
-      }
-   
-      const enrichedBookings = await Promise.all(
-        hostedBookings.bookings.map(async (bookingId) => { 
-          const booking = await Booking.findById(bookingId);
-          if (!booking) return null;
-   
-          const listing = await Listing.findById(booking.listingId).select('name property_type');
-          
-          return {
-            ...booking.toObject(), 
-            listingDetails: listing,  
-          };
-        })
-      );
-   
-      const filteredBookings = enrichedBookings.filter((booking) => booking !== null);
-  
-      res.status(200).json({ bookings: filteredBookings });
-    } 
-    catch (error) {
-      console.error('Error fetching host bookings:', error);
-      res.status(500).json({ error: 'Failed to fetch bookings for host listings.' });
+  try {
+    const userId = req.user.id;
+
+    const hostedBookings = await HostBookings.findById(userId);
+
+    if (!hostedBookings) {
+      return res.status(404).json({ message: 'No bookings found for this host.' });
     }
-  };
-  
+
+    const enrichedBookings = await Promise.all(
+      hostedBookings.bookings.map(async (bookingId) => {
+        const booking = await Booking.findById(bookingId);
+        if (!booking) return null;
+
+        const listing = await Listing.findById(booking.listingId).select('name property_type');
+
+        return {
+          ...booking.toObject(),
+          listingDetails: listing,
+        };
+      })
+    );
+
+    const filteredBookings = enrichedBookings.filter((booking) => booking !== null);
+
+    res.status(200).json({ bookings: filteredBookings });
+  }
+  catch (error) {
+    console.error('Error fetching host bookings:', error);
+    res.status(500).json({ error: 'Failed to fetch bookings for host listings.' });
+  }
+};
+
 
 // Get bookings for all host's listings
 /*exports.getHostBookings = async (req, res) => {
@@ -67,8 +69,48 @@ exports.getHostBookings = async (req, res) => {
     }
 };
 */
- 
+
+
 exports.updateBookingStatus = async (req, res) => {
+  try {
+    const { bookingID, status } = req.body;
+
+    // Find the booking and update its status
+    const updatedBooking = await Booking.findByIdAndUpdate(
+      bookingID,
+      { status },
+      { new: true }
+    );
+
+    if (!updatedBooking) {
+      return res.status(404).json({ message: 'Booking not found.' });
+    }
+
+    const host_Id = await Listing.findById(updatedBooking.listingId).select("hostID");
+    //console.log(host_Id)
+    const hostName = await User.findById(host_Id.hostID).select("username");
+    //console.log(hostName)
+
+
+    // Notify the host
+    const message = {
+      title: "Reservation Status Updated to " + status,
+      details: `"${hostName.username}" updated your reservation status to "${status}". See the listing.`,
+      listingId: updatedBooking.listingId
+    };
+
+
+    sendMessageToUser(String(updatedBooking.userID), message);
+
+    res.status(200).json({ message: 'Booking status updated.', booking: updatedBooking });
+  } catch (error) {
+    console.error('Error updating booking status:', error);
+    res.status(500).json({ error: 'Failed to update booking status.' });
+  }
+};
+
+
+/*exports.updateBookingStatus = async (req, res) => {
     try {
         const { bookingID, status } = req.body; 
         const updatedBooking = await Booking.findByIdAndUpdate(
@@ -87,11 +129,11 @@ exports.updateBookingStatus = async (req, res) => {
         console.error('Error updating booking status:', error);
         res.status(500).json({ error: 'Failed to update booking status.' });
     }
-};
- 
+};*/
+
 exports.getUserDetailsById = async (req, res) => {
   try {
-    const  userId  = req.params.userId;
+    const userId = req.params.userId;
     //console.log(userId)
     const user = await User.findById(userId).select('location username email bio socialLinks');
 
@@ -109,7 +151,7 @@ exports.getUserDetailsById = async (req, res) => {
         socialLinks: user.socialLinks,
       },
     });
-  } 
+  }
   catch (error) {
     console.error('Error fetching user details:', error);
     res.status(500).json({ error: 'Failed to fetch user details. Please try again later.' });

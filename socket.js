@@ -16,7 +16,7 @@ const initSocket = (server) => {
 
     if (userId) {
       connectedUsers.set(userId, socket.id); // Map userId to socket.id
-      console.log(`User connected: ${userId} (Socket ID: ${socket.id})`);
+      //console.log(`User connected: ${userId} (Socket ID: ${socket.id})`);
     } else {
       console.log("No userId provided during connection.");
     }
@@ -42,11 +42,13 @@ const getIo = () => {
 };
 
 const sendMessageToUser = (userId, message) => {
-  const socketId = connectedUsers.get(userId); // Get the socket ID for the user
-  console.log(connectedUsers)
+  const socketId = connectedUsers.get(userId);
+  
+  //console.log("Connected Users:", Array.from(connectedUsers.entries()));
+
   if (socketId) {
     io.to(socketId).emit("notification", message); // Send the message to the user's socket
-    console.log(`Message sent to user ${userId}:`, message);
+    //console.log(`Message sent to user ${userId}:`, message);
   } else {
     console.log(`User ${userId} is not connected.`);
   }
