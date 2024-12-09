@@ -10,6 +10,7 @@ router.post('/create-booking', authenticate, createBooking);
 router.get('/get-reserved-bookings/:listingId', getBlockedDates);
 
 router.get('/made-reservations', authenticate, getGuestBookings);
+
 router.post('/finalize-booking', authenticate, finalizeBooking);
 
 module.exports = router;

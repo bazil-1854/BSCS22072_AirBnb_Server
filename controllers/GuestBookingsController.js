@@ -3,6 +3,8 @@ const Listing = require('../models/listings');
 const ListingBooking = require('../models/listing_bookings');
 const GuestBooking = require('../models/guest_bookings');
 const HostBooking = require('../models/host_bookings');
+const { sendMessageToUser } = require('../socket'); // Import helper functions
+
 
 exports.createBooking = async (req, res) => {
   try {
@@ -52,11 +54,21 @@ exports.createBooking = async (req, res) => {
       await hostBooking.save();
     }
 
+
+    // Notify the host
+    const message = {
+      title: "New Booking Created",
+      details: 'A new booking has been created for your property with .' + specialRequests,
+      bookingId: newBooking._id,
+    };
+
+    sendMessageToUser(hostId, message);
+
     res.status(201).json({
       message: 'Booking created successfully!',
       booking: newBooking,
     });
-  } 
+  }
   catch (error) {
     console.error('Error creating booking:', error);
     res.status(500).json({ error: 'Server error. Please try again later.' });
@@ -142,6 +154,8 @@ exports.getGuestBookings = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch guest bookings.' });
   }
 };
+
+
 
 exports.finalizeBooking = async (req, res) => {
   try {
