@@ -191,7 +191,8 @@ exports.finalizeBooking = async (req, res) => {
         _id: userId,
         bookingHistory: [bookingObject],
       });
-    } else {
+    } 
+    else {
       guestBooking.bookingHistory.push(bookingObject);
     }
     await guestBooking.save();

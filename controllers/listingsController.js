@@ -24,83 +24,19 @@ exports.getListings = async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch listings', error: error.message });
   }
 };
-
-/*exports.getListingsByFiltersFromClient = async (req, res) => {
-  try {
-    const { title, suburb, country, minPrice, maxPrice, beds, bathrooms } = req.body;
-    
-    const query = {};
-
-    if (title && title.trim()) { // Check if title is not empty or only spaces
-      query.title = { $regex: title, $options: 'i' }; // Case-insensitive search
-    }
-    if (suburb && suburb.trim()) { // Check if suburb is not empty or only spaces
-      query.address.suburb = { $regex: suburb, $options: 'i' };
-    }
-    if (country && country.trim()) { // Check if country is not empty or only spaces
-      query.address.country = { $regex: country, $options: 'i' };
-    }
-    if (minPrice || maxPrice) {
-      query.price = {
-        ...(minPrice && { $gte: minPrice }),
-        ...(maxPrice && { $lte: maxPrice }),
-      };
-    }
-    if (beds && beds !== 'Any') { // Check if beds is a valid value
-      query.beds = { $gte: beds };
-    }
-    if (bathrooms && bathrooms !== 'Any') { // Check if bathrooms is a valid value
-      query.bathrooms = { $gte: bathrooms };
-    }
-
-    // Fetch listings from the database
-    console.log(query)
-    const listings = await Listing.find(query);
-
-    // Return the filtered listings
-    res.status(200).json(listings);
-  }
-  catch (error) {
-    console.error(error);
-    res.status(500).json({
-      success: false,
-      message: 'Server Error',
-    });
-  }
-};*/
-
+ 
 exports.getListingsByFiltersFromClient = async (req, res) => {
   try {
-    // Destructure the incoming filters from the request body
-    const {
-      title,
-      suburb,
-      country,
-      minPrice,
-      maxPrice,
-      category,
-      beds,
-      bathrooms,
-    } = req.body;
+    
+    const { title, suburb, country, minPrice, maxPrice, category, beds, bathrooms, } = req.body;
     console.log(req.body);
-    // Define the default values
-    const defaultValues = {
-      title: '',
-      suburb: '',
-      country: '',
-      minPrice: 10,
-      maxPrice: 130,
-      category: 'Apartment',
-      beds: 'Any',
-      bathrooms: 'Any',
-    };
+    //  default values
+    const defaultValues = { title: '', suburb: '', country: '', minPrice: 10, maxPrice: 130, category: 'Apartment', beds: 'Any', bathrooms: 'Any', };
 
-    // Initialize the query object
     const query = {};
 
-    // Dynamically add fields to the query if they differ from the default values
     if (title && title.trim() !== defaultValues.title) {
-      query.title = { $regex: title.trim(), $options: 'i' }; // Case-insensitive search
+      query.title = { $regex: title.trim(), $options: 'i' };
     }
     if (suburb && suburb.trim() !== defaultValues.suburb) {
       query['address.suburb'] = { $regex: suburb.trim(), $options: 'i' };
@@ -115,22 +51,20 @@ exports.getListingsByFiltersFromClient = async (req, res) => {
       };
     }
     if (category && category !== defaultValues.category) {
-      query.category = category; // Match exact category
+      query.category = category;
     }
     if (beds && beds !== defaultValues.beds) {
-      query.beds = { $gte: beds }; // Filter by minimum number of beds
+      query.beds = { $gte: beds };
     }
     if (bathrooms && bathrooms !== defaultValues.bathrooms) {
-      query.bathrooms = { $gte: bathrooms }; // Filter by minimum number of bathrooms
+      query.bathrooms = { $gte: bathrooms };
     }
-
-    // Fetch the filtered listings from the database
-    console.log('Generated Query:', query);
+    //console.log('mkaing Query:', query);
     const listings = await Listing.find(query);
 
-    // Send the filtered listings as the response
-    res.status(200).json(listings);
-  } catch (error) {
+    res.status(200).json( listings );
+  }
+  catch (error) {
     console.error('Error fetching listings:', error);
     res.status(500).json({
       success: false,
@@ -139,48 +73,32 @@ exports.getListingsByFiltersFromClient = async (req, res) => {
   }
 };
 
-
-
 exports.getSearchedListings = async (req, res) => {
   try {
-    const location = req.query.location || {};
-    const guests = parseInt(req.query.guests) || 1;
+    const { guests, location } = req.params;
+    const query = {};
 
-    const suburb = location.suburb || '';
-    const country = location.country || '';
-    const street = location.street || '';
-
-    //console.log('Location Details:', location);
-    //console.log('Guests:', guests);
-
-    const query = {
-      $and: [
-        {
-          $or: [
-            { 'address.suburb': { $regex: suburb, $options: 'i' } },
-            { 'address.country': { $regex: country, $options: 'i' } },
-            { 'address.street': { $regex: street, $options: 'i' } },
-          ],
-        },
-        { maxGuests: { $lte: guests } },
-      ],
-    };
-
-    const listings = await Listing.find(query).exec();
-
-    if (listings.length === 0) {
-      return res.status(404).json({
-        message: 'No listings found matching the search criteria',
-      });
+    if (guests && !isNaN(guests)) {
+      query.maxGuests = { $gte: parseInt(guests, 10) }; 
     }
 
-    res.status(200).json({
-      listings,
-      totalListings: listings.length,
-    });
-  }
+    if (location && location.trim() !== "invalid") {
+      query['address.country'] = { $eq: location.trim() };
+    }
+
+    //console.log('Generated Query:', query);
+
+    const listings = await Listing.find(query);
+
+    console.log({listings});
+    res.status(200).json({listings});
+  } 
   catch (error) {
-    res.status(500).json({ message: 'Failed to fetch listings', error: error.message });
+    console.error('Error fetching searched listings:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server Error',
+    });
   }
 };
 
@@ -267,15 +185,13 @@ exports.toggleFavoriteListing = async (req, res) => {
   try {
     const userId = req.user.id;
     const listingId = req.params.listingId;
-
-    // Check if the listing exists
+ 
     const listing = await Listing.findById(listingId);
 
     if (!listing) {
       return res.status(404).json({ error: 'Listing not found.' });
     }
-
-    // Fetch or create the user's favorites document
+ 
     let favouriteListings = await FavouriteListings.findById(userId);
     if (!favouriteListings) {
       favouriteListings = new FavouriteListings({ _id: userId, favourites: [] });
@@ -287,12 +203,11 @@ exports.toggleFavoriteListing = async (req, res) => {
       favouriteListings.favourites = favouriteListings.favourites.filter(
         (id) => id !== listingId
       );
-      // Decrement the favorite_count on the listing
+      
       listing.favourite_count = Math.max(0, (listing.favourite_count || 0) - 1);
     }
     else {
       favouriteListings.favourites.push(listingId);
-      // Increment the favorite_count on the listing
       listing.favourite_count = (listing.favourite_count || 0) + 1;
     }
 

@@ -10,7 +10,7 @@ router.get('/listings/:id', authenticate, getListingById);
 
 router.get('/listing-details/:id', getListingById_for_users);
 
-router.get('/listing-searched', getSearchedListings);
+router.get('/listing-searched/:guests/:location', getSearchedListings);
 
 router.post('/filtered-listings', getListingsByFiltersFromClient);
 
