@@ -25,11 +25,10 @@ exports.getListings = async (req, res) => {
   }
 };
 
-exports.getListingsByFilters = async (req, res) => {
+/*exports.getListingsByFiltersFromClient = async (req, res) => {
   try {
     const { title, suburb, country, minPrice, maxPrice, beds, bathrooms } = req.body;
-
-    // Build a dynamic query object based on the provided filters
+    
     const query = {};
 
     if (title && title.trim()) { // Check if title is not empty or only spaces
@@ -55,11 +54,12 @@ exports.getListingsByFilters = async (req, res) => {
     }
 
     // Fetch listings from the database
+    console.log(query)
     const listings = await Listing.find(query);
 
     // Return the filtered listings
     res.status(200).json(listings);
-  } 
+  }
   catch (error) {
     console.error(error);
     res.status(500).json({
@@ -67,7 +67,78 @@ exports.getListingsByFilters = async (req, res) => {
       message: 'Server Error',
     });
   }
+};*/
+
+exports.getListingsByFiltersFromClient = async (req, res) => {
+  try {
+    // Destructure the incoming filters from the request body
+    const {
+      title,
+      suburb,
+      country,
+      minPrice,
+      maxPrice,
+      category,
+      beds,
+      bathrooms,
+    } = req.body;
+    console.log(req.body);
+    // Define the default values
+    const defaultValues = {
+      title: '',
+      suburb: '',
+      country: '',
+      minPrice: 10,
+      maxPrice: 130,
+      category: 'Apartment',
+      beds: 'Any',
+      bathrooms: 'Any',
+    };
+
+    // Initialize the query object
+    const query = {};
+
+    // Dynamically add fields to the query if they differ from the default values
+    if (title && title.trim() !== defaultValues.title) {
+      query.title = { $regex: title.trim(), $options: 'i' }; // Case-insensitive search
+    }
+    if (suburb && suburb.trim() !== defaultValues.suburb) {
+      query['address.suburb'] = { $regex: suburb.trim(), $options: 'i' };
+    }
+    if (country && country.trim() !== defaultValues.country) {
+      query['address.country'] = { $regex: country.trim(), $options: 'i' };
+    }
+    if ((minPrice && minPrice !== defaultValues.minPrice) || (maxPrice && maxPrice !== defaultValues.maxPrice)) {
+      query.price = {
+        ...(minPrice && minPrice !== defaultValues.minPrice && { $gte: minPrice }),
+        ...(maxPrice && maxPrice !== defaultValues.maxPrice && { $lte: maxPrice }),
+      };
+    }
+    if (category && category !== defaultValues.category) {
+      query.category = category; // Match exact category
+    }
+    if (beds && beds !== defaultValues.beds) {
+      query.beds = { $gte: beds }; // Filter by minimum number of beds
+    }
+    if (bathrooms && bathrooms !== defaultValues.bathrooms) {
+      query.bathrooms = { $gte: bathrooms }; // Filter by minimum number of bathrooms
+    }
+
+    // Fetch the filtered listings from the database
+    console.log('Generated Query:', query);
+    const listings = await Listing.find(query);
+
+    // Send the filtered listings as the response
+    res.status(200).json(listings);
+  } catch (error) {
+    console.error('Error fetching listings:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server Error',
+    });
+  }
 };
+
 
 
 exports.getSearchedListings = async (req, res) => {
@@ -112,8 +183,6 @@ exports.getSearchedListings = async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch listings', error: error.message });
   }
 };
-
-
 
 exports.getListingById = async (req, res) => {
   try {
