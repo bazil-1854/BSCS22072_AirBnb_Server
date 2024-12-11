@@ -83,12 +83,14 @@ exports.getPaginatedReviews = async (req, res) => {
     const reviewsWithUserDetails = await Promise.all(
       paginatedReviews.map(async (review) => {
         const user = await User.findById(review.userID).select('username profilePicture location');
+        //console.log(user)
         return {
           ...review._doc, 
-          user: user ? { name: user.name, profilePicture: user.profilePicture,location: user.location } : null,
+          user: user ? { username: user.username, profilePicture: user.profilePicture,location: user.location } : null,
         };
       })
     );
+    console.log(reviewsWithUserDetails)
 
     res.status(200).json({
       reviews: reviewsWithUserDetails,

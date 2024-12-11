@@ -25,6 +25,51 @@ exports.getListings = async (req, res) => {
   }
 };
 
+exports.getListingsByFilters = async (req, res) => {
+  try {
+    const { title, suburb, country, minPrice, maxPrice, beds, bathrooms } = req.body;
+
+    // Build a dynamic query object based on the provided filters
+    const query = {};
+
+    if (title && title.trim()) { // Check if title is not empty or only spaces
+      query.title = { $regex: title, $options: 'i' }; // Case-insensitive search
+    }
+    if (suburb && suburb.trim()) { // Check if suburb is not empty or only spaces
+      query.address.suburb = { $regex: suburb, $options: 'i' };
+    }
+    if (country && country.trim()) { // Check if country is not empty or only spaces
+      query.address.country = { $regex: country, $options: 'i' };
+    }
+    if (minPrice || maxPrice) {
+      query.price = {
+        ...(minPrice && { $gte: minPrice }),
+        ...(maxPrice && { $lte: maxPrice }),
+      };
+    }
+    if (beds && beds !== 'Any') { // Check if beds is a valid value
+      query.beds = { $gte: beds };
+    }
+    if (bathrooms && bathrooms !== 'Any') { // Check if bathrooms is a valid value
+      query.bathrooms = { $gte: bathrooms };
+    }
+
+    // Fetch listings from the database
+    const listings = await Listing.find(query);
+
+    // Return the filtered listings
+    res.status(200).json(listings);
+  } 
+  catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: 'Server Error',
+    });
+  }
+};
+
+
 exports.getSearchedListings = async (req, res) => {
   try {
     const location = req.query.location || {};
@@ -62,17 +107,18 @@ exports.getSearchedListings = async (req, res) => {
       listings,
       totalListings: listings.length,
     });
-  } 
-    catch (error) {
+  }
+  catch (error) {
     res.status(500).json({ message: 'Failed to fetch listings', error: error.message });
   }
 };
 
 
+
 exports.getListingById = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.id; 
+    const userId = req.user.id;
     if (!id) {
       return res.status(400).json({ error: 'Invalid listing ID' });
     }
@@ -114,7 +160,7 @@ exports.getListingById = async (req, res) => {
 
 exports.getListingById_for_users = async (req, res) => {
   try {
-    const { id } = req.params; 
+    const { id } = req.params;
 
     if (!id) {
       return res.status(400).json({ error: 'Invalid listing ID' });

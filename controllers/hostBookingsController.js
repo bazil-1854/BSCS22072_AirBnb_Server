@@ -2,6 +2,7 @@ const HostListings = require('../models/hosted_listings');
 const Listing = require('../models/listings');
 const HostBookings = require('../models/host_bookings');
 const Booking = require('../models/bookings');
+const Notification = require('../models/notifications');
 const User = require('../models/user');
 
 const { sendMessageToUser } = require('../socket');
@@ -86,21 +87,31 @@ exports.updateBookingStatus = async (req, res) => {
       return res.status(404).json({ message: 'Booking not found.' });
     }
 
-    const host_Id = await Listing.findById(updatedBooking.listingId).select("hostID");
+    const host_Id = await Listing.findById(updatedBooking.listingId).select("hostID address");
     //console.log(host_Id)
     const hostName = await User.findById(host_Id.hostID).select("username");
     //console.log(hostName)
 
-
+    const newCheckIn = new Date(updatedBooking.checkIn).toDateString();
+    const newCheckOut = new Date(updatedBooking.checkOut).toDateString();
     // Notify the host
     const message = {
-      title: "Reservation Status Updated to " + status,
-      details: `"${hostName.username}" updated your reservation status to "${status}". See the listing.`,
+      title: "Reservation Status Updated to ",
+      details: `Your reservation for "${host_Id.address.suburb}","${host_Id.address.country}" between "${updatedBooking.checkIn}" and "${updatedBooking.checkOut}" has been update to "${status}" by Host "${hostName.username}".`,
+      address: host_Id.address.suburb + ", " + host_Id.address.country,
+      checkInOut: `"${newCheckIn}" and "${newCheckOut}"`,
+      UpdatedStatus: status,
+      host: hostName.username,
       listingId: updatedBooking.listingId
     };
 
 
     sendMessageToUser(String(updatedBooking.userID), message);
+    // saving notification
+    const saveNotification = await Notification.findById(updatedBooking.userID);
+    
+    saveNotification.notifications.push(message);
+    await saveNotification.save();
 
     res.status(200).json({ message: 'Booking status updated.', booking: updatedBooking });
   } catch (error) {
@@ -155,5 +166,30 @@ exports.getUserDetailsById = async (req, res) => {
   catch (error) {
     console.error('Error fetching user details:', error);
     res.status(500).json({ error: 'Failed to fetch user details. Please try again later.' });
+  }
+};
+
+/* notificaiotn */
+
+
+exports.getBookingDetailsForNotification = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+
+    const booking = await Booking.findById(bookingId);
+    console.log(bookingId)
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+    //console.log(booking)
+
+    const listing = await Listing.findById(booking.listingId).select('name property_type');
+ 
+    res.json({ booking, listing });
+  } 
+  catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching booking details' });
   }
 };

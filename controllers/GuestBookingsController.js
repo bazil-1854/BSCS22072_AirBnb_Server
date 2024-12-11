@@ -3,6 +3,7 @@ const Listing = require('../models/listings');
 const ListingBooking = require('../models/listing_bookings');
 const GuestBooking = require('../models/guest_bookings');
 const HostBooking = require('../models/host_bookings');
+const Notification = require('../models/notifications');
 const { sendMessageToUser } = require('../socket'); // Import helper functions
 
 
@@ -20,6 +21,8 @@ exports.createBooking = async (req, res) => {
       totalAmount,
       specialRequests,
     });
+    await newBooking.save();
+    //console.log(newBooking._id)
 
     const listingBooking = await ListingBooking.findById(listingId);
     if (!listingBooking) {
@@ -52,17 +55,25 @@ exports.createBooking = async (req, res) => {
       hostBooking.bookings.push(newBooking._id);
       await hostBooking.save();
     }
-
-    await newBooking.save();
+ 
+    const ListingAddress = await Listing.findById(listingId).select("address");
+    //console.log(ListingAddress.country);
 
     // Notify the host
     const message = {
-      title: "New Booking Created",
-      details: 'A new booking has been created for your property with .' + specialRequests,
+      location: ListingAddress.address.suburb + ", " + ListingAddress.address.country,
+      details: specialRequests,
+      listing_Id: listingId,
       bookingId: newBooking._id,
     };
 
     sendMessageToUser(hostId, message);
+    
+    // saving notification
+    const saveNotification = await Notification.findById(hostId);
+    
+    saveNotification.notifications.push(message);
+    await saveNotification.save();
 
     res.status(201).json({
       message: 'Booking created successfully!',
