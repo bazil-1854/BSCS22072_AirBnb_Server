@@ -4,10 +4,8 @@ const HostBookings = require('../models/host_bookings');
 const Booking = require('../models/bookings');
 const Notification = require('../models/notifications');
 const User = require('../models/user');
-
 const { sendMessageToUser } = require('../socket');
-
-// Get bookings for all host's listings with listing details
+ 
 exports.getHostBookings = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -75,8 +73,7 @@ exports.getHostBookings = async (req, res) => {
 exports.updateBookingStatus = async (req, res) => {
   try {
     const { bookingID, status } = req.body;
-
-    // Find the booking and update its status
+ 
     const updatedBooking = await Booking.findByIdAndUpdate(
       bookingID,
       { status },

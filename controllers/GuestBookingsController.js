@@ -55,7 +55,7 @@ exports.createBooking = async (req, res) => {
       hostBooking.bookings.push(newBooking._id);
       await hostBooking.save();
     }
- 
+
     const ListingAddress = await Listing.findById(listingId).select("address");
     //console.log(ListingAddress.country);
 
@@ -68,10 +68,10 @@ exports.createBooking = async (req, res) => {
     };
 
     sendMessageToUser(hostId, message);
-    
+
     // saving notification
     const saveNotification = await Notification.findById(hostId);
-    
+
     saveNotification.notifications.push(message);
     await saveNotification.save();
 
@@ -166,6 +166,24 @@ exports.getGuestBookings = async (req, res) => {
   }
 };
 
+exports.getGuestBookingsHistory = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Fetch guest bookings by userId
+    const guestBookings = await GuestBooking.findById(userId);
+
+    if (!guestBookings || !guestBookings.bookingHistory.length) {
+      return res.status(404).json({ message: 'No bookings found for this user.' });
+    }
+    //console.log(guestBookings.bookingHistory)
+
+    res.status(200).json({ bookings: guestBookings.bookingHistory });
+  } catch (error) {
+    console.error('Error fetching guest bookings:', error);
+    res.status(500).json({ error: 'Failed to fetch guest bookings.' });
+  }
+};
 
 
 exports.finalizeBooking = async (req, res) => {
@@ -173,30 +191,48 @@ exports.finalizeBooking = async (req, res) => {
     const { bookingId } = req.body;
     const userId = req.user.id;
 
+    // Fetch the booking
     const booking = await Booking.findById(bookingId);
     if (!booking) {
       return res.status(404).json({ error: 'Booking not found.' });
     }
+
+    const listing = await Listing.findById(booking.listingId);
+    if (!listing) {
+      return res.status(404).json({ error: 'Listing not found.' });
+    }
+    // Create booking object to store
     const bookingObject = {
       listingId: booking.listingId,
+      listingImage: listing.images.placePicture,
+      listingSuburb: listing.address.suburb,
+      listingCountry: listing.address.country,
       checkIn: booking.checkIn,
       checkOut: booking.checkOut,
       guests: booking.guests,
       totalAmount: booking.totalAmount,
     };
 
+    // Update GuestBooking collection
     let guestBooking = await GuestBooking.findById(userId);
     if (!guestBooking) {
       guestBooking = new GuestBooking({
         _id: userId,
+        booking: [], // Ensure array is initialized if not present
         bookingHistory: [bookingObject],
       });
-    } 
+    }
     else {
+      // Remove the booking ID from the 'booking' array if it exists
+      const bookingIndex = guestBooking.bookings.indexOf(bookingId);
+      if (bookingIndex > -1) {
+        guestBooking.bookings.splice(bookingIndex, 1);
+      }
       guestBooking.bookingHistory.push(bookingObject);
     }
     await guestBooking.save();
 
+    // Update ListingBooking collection
     let listingBooking = await ListingBooking.findById(booking.listingId);
     if (!listingBooking) {
       listingBooking = new ListingBooking({
@@ -209,19 +245,11 @@ exports.finalizeBooking = async (req, res) => {
     }
     await listingBooking.save();
 
-    const listing = await Listing.findById(booking.listingId);
-    if (!listing) {
-      return res.status(404).json({ error: 'Listing not found.' });
-    }
-
-    if (!listing.bookingsMade) {
-      listing.bookingsMade = 1;
-    }
-    else {
-      listing.bookingsMade += 1;
-    }
+    // Update Listing collection
+    listing.bookingsMade = (listing.bookingsMade || 0) + 1;
     await listing.save();
 
+    // Update HostBooking collection
     const hostId = listing.hostID;
     let hostBooking = await HostBooking.findById(hostId);
     if (!hostBooking) {
@@ -231,12 +259,8 @@ exports.finalizeBooking = async (req, res) => {
       });
     }
     else {
-      if (!hostBooking.bookingsMade) {
-        hostBooking.bookingsMade = 1;
-      }
-      else {
-        hostBooking.bookingsMade += 1;
-      }
+      hostBooking.bookingsMade = (hostBooking.bookingsMade || 0) + 1;
+      // Remove the booking ID from the host's bookings array if it exists
       const bookingIndex = hostBooking.bookings.indexOf(bookingId);
       if (bookingIndex > -1) {
         hostBooking.bookings.splice(bookingIndex, 1);
@@ -245,8 +269,7 @@ exports.finalizeBooking = async (req, res) => {
     await hostBooking.save();
 
     res.status(200).json({ message: 'Booking finalized successfully.' });
-  }
-  catch (error) {
+  } catch (error) {
     console.error('Error finalizing booking:', error);
     res.status(500).json({ error: 'Failed to finalize booking. Please try again later.' });
   }

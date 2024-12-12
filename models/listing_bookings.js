@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const ListingBookingSchema = new mongoose.Schema({ 
+const ListingBookingSchema = new mongoose.Schema({
   bookings: {
     type: [String],
     default: [],
@@ -8,7 +8,10 @@ const ListingBookingSchema = new mongoose.Schema({
   previousBookings: {
     type: [
       {
-        listingId: { type: mongoose.Schema.Types.ObjectId, ref: 'Listings', required: true },
+        listingId: { type: mongoose.Schema.Types.ObjectId, ref: 'Listings'},
+        listingImage: { type: String },
+        listingSuburb: { type: String },
+        listingCountry: { type: String },
         checkIn: { type: Date, required: true },
         checkOut: { type: Date, required: true },
         guests: {

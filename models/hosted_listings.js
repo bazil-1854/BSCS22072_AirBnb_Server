@@ -2,12 +2,12 @@ const mongoose = require('mongoose');
 
 const hostListingSchema = new mongoose.Schema({
   listings: { 
-    type: [String],  // Array to store listing IDs
+    type: [String], 
     default: [] 
   },
   hostID: { 
     type: mongoose.Schema.Types.ObjectId, 
-    ref: 'User',  // This references the User model
+    ref: 'User',   
     required: true 
   }
 });

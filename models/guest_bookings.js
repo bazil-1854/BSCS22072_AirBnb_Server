@@ -1,11 +1,13 @@
 const mongoose = require('mongoose');
 
-const GuestListingBookingSchema = new mongoose.Schema({ 
+const GuestListingBookingSchema = new mongoose.Schema({
   bookingHistory: {
     type: [
       {
-
-        listingId: { type: mongoose.Schema.Types.ObjectId, ref: 'Listings', required: true },
+        listingId: { type: mongoose.Schema.Types.ObjectId, ref: 'Listings' },
+        listingImage: { type: String },
+        listingSuburb: { type: String },
+        listingCountry: { type: String },
         checkIn: { type: Date, required: true },
         checkOut: { type: Date, required: true },
         guests: {

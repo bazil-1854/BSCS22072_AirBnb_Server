@@ -77,6 +77,7 @@ exports.getSearchedListings = async (req, res) => {
   try {
     const { guests, location } = req.params;
     const query = {};
+    console.log(query);
 
     if (guests && !isNaN(guests)) {
       query.maxGuests = { $gte: parseInt(guests, 10) }; 
