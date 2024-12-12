@@ -77,7 +77,6 @@ exports.getSearchedListings = async (req, res) => {
   try {
     const { guests, location } = req.params;
     const query = {};
-    console.log(query);
 
     if (guests && !isNaN(guests)) {
       query.maxGuests = { $gte: parseInt(guests, 10) }; 
@@ -87,11 +86,9 @@ exports.getSearchedListings = async (req, res) => {
       query['address.country'] = { $eq: location.trim() };
     }
 
-    //console.log('Generated Query:', query);
-
+    console.log(query);
     const listings = await Listing.find(query);
-
-    console.log({listings});
+    //console.log({listings});
     res.status(200).json({listings});
   } 
   catch (error) {

@@ -21,6 +21,10 @@ const userSchema = new mongoose.Schema({
     //required: true, 
     minlength: 6
   },
+  phoneNumber: {
+    type: String, 
+    default: '03*********', 
+  },
   role: {
     type: String,
     enum: ['Host', 'Guest'],
