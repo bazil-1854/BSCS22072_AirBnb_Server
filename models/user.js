@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     //required: true, 
     //unique: true, 
-    default: 'User 1',
+    default: 'New User',
     trim: true
   },
   email: {
@@ -17,8 +17,7 @@ const userSchema = new mongoose.Schema({
     trim: true
   },
   password: {
-    type: String,
-    //required: true, 
+    type: String, 
     minlength: 6
   },
   phoneNumber: {
@@ -106,7 +105,7 @@ const userSchema = new mongoose.Schema({
   },
   hosted_listings: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'HostListing',  // Reference to the HostListing document
+    ref: 'HostListing',
     default: null
   }
 });
