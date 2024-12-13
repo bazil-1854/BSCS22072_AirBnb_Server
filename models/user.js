@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema({
   },
   phoneNumber: {
     type: String, 
-    default: '03*********', 
+    default: '03000000000', 
   },
   role: {
     type: String,
@@ -43,7 +43,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: '1'
   },
-  phoneNumber: {
+  /*phoneNumber: {
     type: String,
     //required: true, 
     validate: {
@@ -52,7 +52,7 @@ const userSchema = new mongoose.Schema({
       },
       message: props => `${props.value} is not a valid phone number!`
     }
-  },
+  },*/
   bio: {
     type: String,
     default: 'Hi, I’m new here!',
